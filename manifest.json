@@ -1,7 +1,7 @@
 {
-  "name": "Jahid Agro Calculator",
-  "short_name": "Jahid Agro",
-  "description": "Jahid Agro Calculator — পশুর ওজন থেকে দৈনিক খাবারের পরিমাণ, খরচ, লাভ-ক্ষতি ও ঔষধের ডোজ হিসাব",
+  "name": "Agro Calculator",
+  "short_name": "Agro Calculator",
+  "description": "Agro Calculator — পশুর ওজন থেকে দৈনিক খাবারের পরিমাণ, খরচ, লাভ-ক্ষতি ও ঔষধের ডোজ হিসাব | by Jahid Agro",
   "lang": "bn",
   "dir": "ltr",
   "start_url": "./index.html",

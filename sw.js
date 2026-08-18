@@ -1,5 +1,5 @@
-/* খামার ক্যালকুলেটর — অফলাইন সার্ভিস ওয়ার্কার */
-const CACHE = 'khamar-v1';
+/* Agro Calculator — অফলাইন সার্ভিস ওয়ার্কার */
+const CACHE = 'agro-v2';
 const FILES = ['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png','./icon-maskable.png','./apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
