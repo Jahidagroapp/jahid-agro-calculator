@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jahid Agro Calculator — খামার হিসাব</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1b5e20">
+<meta name="description" content="পশুর ওজন থেকে দৈনিক খাবারের পরিমাণ, খরচ, লাভ-ক্ষতি ও ঔষধের ডোজ হিসাব">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Jahid Agro">
+<link rel="icon" href="favicon-64.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--g1:#1b5e20;--g2:#2e7d32;--g3:#43a047;--amber:#ef6c00;--red:#c62828;
+--bg:#f2f5f3;--card:#fff;--line:#dfe6e0;--ink:#16241a;--muted:#6b7b6e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans Bengali','Nirmala UI','SolaimanLipi',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.65}
+.wrap{max-width:1180px;margin:0 auto;padding:16px}
+header{background:linear-gradient(135deg,var(--g1),var(--g3));color:#fff;padding:22px 16px;border-radius:0 0 18px 18px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+header h1{font-size:23px;font-weight:700;line-height:1.25}
+.brand{display:flex;align-items:center;gap:13px;margin-bottom:6px}
+.brand .logo{width:52px;height:52px;border-radius:13px;background:#fff;padding:2px;flex:0 0 auto;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.by{font-size:13px;font-weight:600;letter-spacing:.3px;opacity:.95;margin-top:1px}
+.by .dot{opacity:.6;margin:0 4px}
+footer{text-align:center;padding:22px 16px 30px;color:var(--muted);font-size:12.5px}
+footer b{color:var(--g1)}header p{opacity:.9;font-size:13px;margin-top:3px}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin:16px 0;padding-bottom:4px}
+.tab{flex:0 0 auto;padding:10px 16px;border-radius:10px;background:#fff;border:1px solid var(--line);cursor:pointer;font-weight:600;font-size:14px;font-family:inherit;color:var(--muted)}
+.tab.on{background:linear-gradient(135deg,var(--g2),var(--g3));color:#fff;border-color:transparent}
+.panel{display:none}.panel.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.card h2{font-size:17px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #eef2ef}
+.card h3{font-size:15px;margin:16px 0 8px;color:var(--g1)}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(155px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}
+label{display:block;font-size:13px;font-weight:600;margin-bottom:5px;color:#3c4b40;line-height:1.4}
+/* লেবেল ছোট-বড় হলেও ঘরগুলো এক লাইনে থাকবে */
+.grid>div:not(.stat):not(.feedbox){display:flex;flex-direction:column;justify-content:flex-end}
+.grid>div:not(.stat):not(.feedbox)>label{flex:1 0 auto}
+input,select{width:100%;padding:9px 11px;border:1px solid #cfd8d1;border-radius:9px;font-family:inherit;font-size:15px;background:#fff;height:42px;line-height:1.3}
+input:focus,select:focus{outline:2px solid var(--g3);outline-offset:-1px;border-color:var(--g3)}
+button{font-family:inherit;font-size:15px;font-weight:600;padding:10px 18px;border:none;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,var(--g2),var(--g3));color:#fff}
+button:active{transform:translateY(1px)}
+button.sec{background:#eceff0;color:#3c4b40;border:1px solid var(--line)}
+button.sm{padding:5px 11px;font-size:13px}
+.stat{border-radius:13px;padding:14px;color:#fff}
+.stat .l{font-size:12.5px;opacity:.93}.stat .v{font-size:22px;font-weight:700;margin-top:3px}
+.s1{background:linear-gradient(135deg,#1565c0,#42a5f5)}.s2{background:linear-gradient(135deg,#00695c,#26a69a)}
+.s3{background:linear-gradient(135deg,#2e7d32,#66bb6a)}.s4{background:linear-gradient(135deg,#c62828,#ef5350)}
+.s5{background:linear-gradient(135deg,#6a1b9a,#ab47bc)}.s6{background:linear-gradient(135deg,#ef6c00,#ffa726)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid #eef2ef;vertical-align:middle}
+th.n,td.n{text-align:right;white-space:nowrap}
+/* সংখ্যার কলাম ডানে, লেখার কলাম বাঁয়ে */
+#monthTable th:not(:first-child),#monthTable td:not(:first-child),
+#spTable th:not(:first-child),#spTable td:not(:first-child),
+#batchTable th:not(:first-child),#batchTable td:not(:first-child),
+#mixTable th:nth-child(5),#mixTable td:nth-child(5),
+#profitTable th:nth-child(n+3):nth-child(-n+6),#profitTable td:nth-child(n+3):nth-child(-n+6),
+.numtbl th:not(:first-child),.numtbl td:not(:first-child){text-align:right;white-space:nowrap}
+#mixTable td:last-child,#mixTable th:last-child{text-align:center;width:44px}
+#mixTable td:first-child{min-width:170px}
+th{background:#f4f8f5;font-weight:700;font-size:13px;color:#33463a}
+.tw{overflow-x:auto}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:700}
+.ok{background:#e6f4ea;color:#1b5e20}.warn{background:#fff4e0;color:#a35200}.bad{background:#fde8e8;color:#b71c1c}
+.note{background:#f0f6f2;border-left:4px solid var(--g3);padding:11px 13px;border-radius:9px;font-size:13.5px;margin:10px 0;color:#33463a}
+.alert{background:#fff6e5;border-left:4px solid var(--amber);padding:11px 13px;border-radius:9px;font-size:13.5px;margin:8px 0}
+.danger{background:#fdeaea;border-left:4px solid var(--red);padding:12px 14px;border-radius:9px;font-size:13.5px;margin:10px 0}
+.bar{height:26px;border-radius:7px;overflow:hidden;display:flex;margin:10px 0;background:#eef2ef}
+.bar div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted);font-size:13px}
+.feedbox{background:#f4f8f5;border-radius:11px;padding:14px;text-align:center;border:1px solid #e2ebe4}
+.feedbox .n{font-size:13px;color:var(--muted);font-weight:600}
+.feedbox .q{font-size:25px;font-weight:700;color:var(--g1);margin:3px 0}
+.feedbox .c{font-size:12.5px;color:var(--muted)}
+.spTabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.spTab{padding:7px 14px;border-radius:20px;border:1px solid var(--line);background:#fff;cursor:pointer;font-family:inherit;font-weight:600;font-size:13.5px;color:var(--muted)}
+.spTab.on{background:var(--g1);color:#fff;border-color:var(--g1)}
+/* --- animal cards --- */
+.anGrid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(310px,1fr))}
+.anBox{background:#fff;border:1px solid var(--line);border-radius:15px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.05);transition:.15s}
+.anBox:hover{box-shadow:0 4px 14px rgba(0,0,0,.1)}
+.anBox.flag{border-color:#f2b6b6}
+.anTop{background:linear-gradient(135deg,var(--g1),var(--g3));color:#fff;padding:11px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.anBox.flag .anTop{background:linear-gradient(135deg,#b71c1c,#e53935)}
+.anTop .nm{font-weight:700;font-size:16px;line-height:1.3}
+.anTop .sub{font-size:12px;opacity:.92}
+.anX{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:4px 9px;cursor:pointer;font-size:14px;font-weight:700;flex:0 0 auto}
+.anWt{display:flex;justify-content:space-between;align-items:baseline;padding:10px 14px;background:#f4f8f5;border-bottom:1px solid #e6ede8}
+.anWt b{font-size:20px;color:var(--g1)}
+.anFeed{display:grid;grid-template-columns:1fr 1fr 1fr;text-align:center;padding:12px 8px;gap:4px}
+.anFeed .n{font-size:11.5px;color:var(--muted);font-weight:600}
+.anFeed .v{font-size:19px;font-weight:700;color:var(--g1)}
+.anFeed .u{font-size:11px;color:var(--muted)}
+.anMoney{display:flex;justify-content:space-between;padding:10px 14px;border-top:1px dashed #dbe4dd;font-size:13.5px}
+.anMoney b{font-size:16px}
+.anAct{display:flex;gap:8px;padding:10px 14px;border-top:1px solid #eef2ef;background:#fafcfa}
+.anAct button{flex:1;padding:8px;font-size:13.5px}
+.anWarn{padding:8px 14px;background:#fff6e5;font-size:12.5px;border-top:1px solid #ffe2b0}
+.anBox.flag .anWarn{background:#fdeaea;border-top-color:#f6cccc}
+.anBox.edit{border:2px solid var(--g3)}
+.anBox.edit .anTop{background:linear-gradient(135deg,#00695c,#26a69a)}
+.anEdit{padding:12px 14px;display:grid;gap:9px;grid-template-columns:1fr 1fr}
+.anEdit .full{grid-column:1/-1}
+.anEdit label{font-size:12px;margin-bottom:3px}
+.anEdit input,.anEdit select{padding:7px 9px;font-size:14px}
+hr{border:none;border-top:1px dashed #d5ded8;margin:14px 0}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9999;display:none;
+ padding:13px 22px;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 6px 22px rgba(0,0,0,.25);max-width:92vw;text-align:center}
+#toast.ok{background:#1b5e20;color:#fff}#toast.err{background:#b71c1c;color:#fff}
+.formMsg:empty{display:none}
+.formMsg{margin-top:10px}
+.addBtn{font-size:17px;padding:13px 26px}
+@media print{.tabs,button,.noprint,.spTabs{display:none!important}.panel{display:block!important}body{background:#fff}.anGrid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.wrap{padding:10px}header h1{font-size:19px}.anGrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="brand">
+    <img src="logo-mark.png" alt="Jahid Agro" class="logo">
+    <div>
+      <h1>Jahid Agro Calculator</h1>
+      <p class="by">জাহিদ এগ্রো <span class="dot">•</span> খামার হিসাব</p>
+    </div>
+  </div>
+  <p>গরু · মহিষ · ছাগল · ভেড়া — ওজন → খাবারের পরিমাণ → খরচ → ঔষধের ডোজ | প্রতিটি পশু আলাদা</p>
+  <div id="installRow" style="display:none;margin-top:12px">
+    <button id="installBtn" style="background:#fff;color:#1b5e20">⬇ ফোনে ইনস্টল করুন</button>
+    <span style="font-size:12.5px;opacity:.92;margin-left:8px">হোম স্ক্রিনে আইকন বসবে, ইন্টারনেট ছাড়াও চলবে</span>
+  </div>
+  <div id="saveNote" style="font-size:12px;opacity:.85;margin-top:8px"></div>
+</div></header>
+
+<div class="wrap">
+<div class="tabs">
+  <button class="tab on" data-p="p-sum">📊 খামার সারাংশ</button>
+  <button class="tab" data-p="p-an">🐄 পশু ও রেশন</button>
+  <button class="tab" data-p="p-mix">🌾 দানাদার ফর্মুলা</button>
+  <button class="tab" data-p="p-med">💊 ঔষধের ডোজ</button>
+  <button class="tab" data-p="p-set">⚙️ সেটিংস</button>
+</div>
+
+<!-- ============ SUMMARY ============ -->
+<div class="panel on" id="p-sum">
+  <div class="card"><h2>📊 পুরো খামার</h2><div class="grid g3" id="sumStats"></div></div>
+  <div class="card"><h2>🐾 পশুভেদে হিসাব</h2><div class="tw"><table id="spTable"></table></div></div>
+  <div class="card">
+    <h2>🛒 দৈনিক মোট খাবার</h2><div class="grid g4" id="sumFeed"></div>
+    <h3>মাসিক ক্রয় তালিকা (৩০ দিন)</h3><div class="tw"><table id="monthTable"></table></div>
+  </div>
+  <div class="card"><h2>💰 লাভ-ক্ষতির পূর্বাভাস</h2><div class="tw"><table id="profitTable"></table></div><div id="profitMsg"></div></div>
+  <div class="card noprint"><h2>💾 তথ্য সংরক্ষণ</h2>
+    <div class="note">পেজ বন্ধ করলে তথ্য মুছে যাবে। কাজ শেষে <b>ফাইল সেভ</b> করুন — পরে ওই ফাইল লোড করলেই সব ফিরে আসবে।</div>
+    <div class="row"><button data-act="saveJson">⬇ ফাইল সেভ</button>
+      <label class="sec" style="padding:10px 18px;border-radius:10px;background:#eceff0;border:1px solid var(--line);cursor:pointer;font-weight:600;margin:0">⬆ ফাইল লোড<input type="file" accept=".json" style="display:none" data-chg="loadJson"></label>
+      <button class="sec" data-act="print">🖨 প্রিন্ট / PDF</button></div>
+  </div>
+</div>
+
+<!-- ============ ANIMALS ============ -->
+<div class="panel" id="p-an">
+  <div class="card">
+    <h2 data-act="focusAdd" style="cursor:pointer">🐄 নতুন পশু যোগ করুন <span class="muted" style="font-weight:400;font-size:12.5px">— নিচের ঘরগুলো পূরণ করে সবুজ বাটনে চাপুন</span></h2>
+    <label>কোন পশু?</label>
+    <div class="spTabs" id="spPick"></div>
+    <div class="grid g3">
+      <div><label>নাম / ট্যাগ নম্বর</label><input id="c_name" placeholder="যেমন: ট্যাগ ০০৭"></div>
+      <div><label>ওজন মাপার পদ্ধতি</label>
+        <select id="c_method" data-chg="method">
+          <option value="scale">⚖️ স্কেল / ওজন যন্ত্র</option>
+          <option value="tape">📏 ফিতা / টেপ</option>
+        </select></div>
+      <div><label>ধরন / ধাপ</label><select id="c_stage"></select></div>
+    </div>
+
+    <div id="scaleBox" style="margin-top:12px">
+      <div class="grid g3"><div><label>ওজন (কেজি) — স্কেলে যা এসেছে</label><input id="c_wt" type="text" inputmode="decimal" data-num placeholder="২৫০"></div></div>
+      <div class="note">⚖️ সকালে খাওয়ানোর আগে মাপুন। ভরা পেটে ওজন বেশি দেখায়। প্রতিবার একই সময়ে মাপলে তুলনা সঠিক হবে।</div>
+    </div>
+
+    <div id="tapeBox" style="display:none;margin-top:12px">
+      <div class="grid g3">
+        <div><label>বুকের বেড় (সেমি)</label><input id="t_g" type="text" inputmode="decimal" data-num data-inp="tape" placeholder="১৫০"></div>
+        <div><label>শরীরের দৈর্ঘ্য (সেমি)</label><input id="t_l" type="text" inputmode="decimal" data-num data-inp="tape" placeholder="১৪০"></div>
+        <div><label>হিসাব করা ওজন (কেজি)</label><input id="c_wt2" type="text" inputmode="decimal" data-num placeholder="স্বয়ংক্রিয়"></div>
+      </div>
+      <div id="tapeOut" class="muted" style="margin-top:8px"></div>
+      <div class="note">📏 <b>বুকের বেড়</b> — সামনের পায়ের ঠিক পেছনে, কাঁধের চূড়ার নিচ দিয়ে পুরো শরীর ঘিরে। <b>দৈর্ঘ্য</b> — কাঁধের হাড়ের সামনে থেকে পাছার হাড় পর্যন্ত সোজা মাপ। সমতল জায়গায় সোজা দাঁড়ানো অবস্থায় মাপুন।</div>
+      <div id="tapeCalWarn"></div>
+    </div>
+
+    <div class="grid g3" style="margin-top:12px">
+      <div id="milkWrap" style="display:none"><label>দৈনিক দুধ (লিটার)</label><input id="c_milk" type="text" inputmode="decimal" data-num value="0"></div>
+      <div><label>লক্ষ্য ADG (গ্রাম/দিন)</label><input id="c_adg" type="text" inputmode="decimal" data-num value="800"></div>
+      <div><label>ক্রয়মূল্য (৳)</label><input id="c_buy" type="text" inputmode="decimal" data-num placeholder="ঐচ্ছিক"></div>
+    </div>
+    <div id="formMsg" class="formMsg"></div>
+    <div class="row" style="margin-top:14px"><button class="addBtn" data-act="add">✔ তালিকায় যোগ করুন</button><span class="muted">⬅ পূরণ শেষে এই সবুজ বাটনে চাপুন</span></div>
+  </div>
+
+  <div class="card">
+    <h2>📋 পশুর তালিকা <span class="muted" id="anCount"></span></h2>
+    <div class="spTabs" id="filterPick"></div>
+    <div id="anList"></div>
+  </div>
+  <div id="detail"></div>
+</div>
+
+<!-- ============ MIX ============ -->
+<div class="panel" id="p-mix">
+  <div class="card"><h2>🌾 দানাদার খাবার</h2>
+    <div class="grid g2">
+      <div><label>কোন পদ্ধতি?</label><select id="concMode" data-chg="concMode">
+        <option value="mix">নিজে মিক্স করি</option><option value="ready">রেডিমেড ফিড কিনি</option></select></div>
+      <div id="readyWrap"><label>রেডিমেড ফিডের দাম (৳/কেজি)</label><input id="priceReady" type="text" inputmode="decimal" data-num data-chg="readyPrice"></div>
+      <div id="readyCpWrap"><label>রেডিমেড ফিডের CP (%)</label><input id="cpReady" type="text" inputmode="decimal" data-num data-chg="readyCp"></div>
+    </div>
+  </div>
+  <div class="card" id="mixCard"><h2>⚗️ নিজের মিক্স ফর্মুলা</h2>
+    <div class="tw"><table id="mixTable"></table></div>
+    <div class="row" style="margin-top:12px"><button class="sec sm" data-act="addIng">➕ উপাদান যোগ</button><button class="sec sm" data-act="resetMix">↺ ডিফল্টে ফিরুন</button></div>
+    <div class="grid g3" style="margin-top:16px">
+      <div class="feedbox"><div class="n">মোট অনুপাত</div><div class="q" id="mixSum">—</div><div class="c">১০০% হতে হবে</div></div>
+      <div class="feedbox"><div class="n">প্রোটিন (CP)</div><div class="q" id="mixCp">—</div><div class="c">শুষ্ক পদার্থে</div></div>
+      <div class="feedbox"><div class="n">খরচ</div><div class="q" id="mixCost">—</div><div class="c">প্রতি কেজি</div></div>
+    </div>
+    <div id="mixMsg"></div>
+  </div>
+  <div class="card"><h2>🧮 মিক্স ব্যাচ তৈরি</h2>
+    <div class="grid g2"><div><label>কত কেজি বানাবেন?</label><input id="batchKg" type="text" inputmode="decimal" data-num value="100" data-chg="batch"></div></div>
+    <div class="tw" style="margin-top:12px"><table id="batchTable"></table></div>
+  </div>
+</div>
+
+<!-- ============ MED ============ -->
+<div class="panel" id="p-med">
+  <div class="danger"><b>⚠️ অত্যন্ত জরুরি সতর্কতা</b><br>
+    এই ক্যালকুলেটর শুধু <b>গণিতের হিসাব</b> করে। এটি কোনো ঔষধের ডোজ সুপারিশ করে না এবং পশু ডাক্তারের বিকল্প নয়।<br><br>
+    ডোজ ও ঘনত্ব <b>অবশ্যই ঔষধের বোতল/প্যাকেটের লেবেল থেকে</b> দেখে বসাবেন। একই নামের ঔষধ ভিন্ন ঘনত্বে বিক্রি হয় — ভুল ঘনত্বে <b>পশু মারা যেতে পারে</b>।<br><br>
+    <b>ছাগল ও ভেড়ায় বাড়তি সতর্কতা:</b> কিছু ঔষধ গরুতে নিরাপদ হলেও ছাগল-ভেড়ায় বিষাক্ত, আবার কিছু ঔষধে ছাগলের ডোজ গরুর চেয়ে বেশি লাগে। ছোট পশুতে সামান্য ভুলেও বড় ক্ষতি হয়। ডাক্তারের পরামর্শ ছাড়া প্রয়োগ করবেন না।</div>
+  <div class="card"><h2>💊 ডোজ হিসাব</h2>
+    <div class="grid g2">
+      <div><label>পশু নির্বাচন</label><select id="m_an"></select></div>
+      <div><label>অথবা সরাসরি ওজন (কেজি)</label><input id="m_wt" type="text" inputmode="decimal" data-num placeholder="লিখলে উপরেরটি বাতিল"></div>
+    </div><hr>
+    <div class="grid g2">
+      <div><label>ঔষধের নাম</label><input id="m_name" placeholder="লেবেলে যা লেখা"></div>
+      <div><label>ডোজের ধরন</label><select id="m_mode" data-chg="medMode">
+        <option value="mgkg">মিগ্রা / কেজি দেহওজন</option><option value="mlkg">মিলি / কেজি দেহওজন</option>
+        <option value="ml50">মিলি / ৫০ কেজি</option><option value="ml10">মিলি / ১০ কেজি</option></select></div>
+      <div><label id="m_doseLbl">ডোজ</label><input id="m_dose" type="text" inputmode="decimal" data-num placeholder="লেবেল দেখুন"></div>
+      <div id="m_concWrap"><label>ঘনত্ব (মিগ্রা/মিলি বা বড়ি)</label><input id="m_conc" type="text" inputmode="decimal" data-num placeholder="লেবেল দেখুন"></div>
+      <div><label>প্রয়োগের ধরন</label><select id="m_form"><option value="inj">ইনজেকশন (মিলি)</option><option value="tab">বড়ি / বোলাস (পিস)</option><option value="pow">পাউডার / তরল</option></select></div>
+      <div><label>দিনে কত বার</label><input id="m_times" type="text" inputmode="decimal" data-num value="1"></div>
+      <div><label>কত দিন চলবে</label><input id="m_days" type="text" inputmode="decimal" data-num value="1"></div>
+      <div><label>মাংস উইথড্রয়াল (দিন)</label><input id="m_meat" type="text" inputmode="decimal" data-num value="0"></div>
+      <div><label>দুধ উইথড্রয়াল (দিন)</label><input id="m_milk" type="text" inputmode="decimal" data-num value="0"></div>
+      <div><label>দাম (৳ প্রতি মিলি বা বড়ি)</label><input id="m_price" type="text" inputmode="decimal" data-num value="0"></div>
+    </div>
+    <div class="row" style="margin-top:14px"><button data-act="medCalc">💊 হিসাব করুন</button></div>
+    <div id="medOut"></div>
+  </div>
+</div>
+
+<!-- ============ SETTINGS ============ -->
+<div class="panel" id="p-set">
+  <div class="card"><h2>⚙️ দাম ও শুষ্ক পদার্থ</h2>
+    <div class="grid g3">
+      <div><label>কাঁচা ঘাসের দাম (৳/কেজি)</label><input id="priceGrass" type="text" inputmode="decimal" data-num></div>
+      <div><label>খড়ের দাম (৳/কেজি)</label><input id="priceStraw" type="text" inputmode="decimal" data-num></div>
+      <div id="concModeSlot"></div>
+      <div id="concPriceSlot"></div>
+      <div><label>কাঁচা ঘাসে শুষ্ক পদার্থ (%)</label><input id="dmGrass" type="text" inputmode="decimal" data-num></div>
+      <div><label>খড়ে শুষ্ক পদার্থ (%)</label><input id="dmStraw" type="text" inputmode="decimal" data-num></div>
+      <div><label>দানাদারে শুষ্ক পদার্থ (%)</label><input id="dmConc" type="text" inputmode="decimal" data-num></div>
+      <div><label>আঁশের কত % কাঁচা ঘাস</label><input id="roughGrassPct" type="text" inputmode="decimal" data-num></div>
+      <div><label>পানি (লিটার / কেজি শুষ্ক খাবার)</label><input id="waterPerKgDm" type="text" inputmode="decimal" data-num></div>
+      <div><label>গরম মৌসুম?</label><select id="hot"><option value="0">না</option><option value="1">হ্যাঁ (পানি +১৫%)</option></select></div>
+    </div>
+    <h3>জীবিত ওজনের বাজার দর (৳ প্রতি কেজি)</h3>
+    <div class="grid g4" id="rateBox"></div>
+    <div class="row" style="margin-top:14px"><button data-act="saveSet">✔ সংরক্ষণ করুন</button></div>
+  </div>
+
+  <div class="card"><h2>📏 ফিতা ক্যালিব্রেশন — স্কেল ও ফিতা মিলিয়ে নিন</h2>
+    <div class="note">আপনার স্কেল <b>ও</b> ফিতা দুটোই আছে — একটি পশু দুই পদ্ধতিতে মেপে এখানে বসান। ক্যালকুলেটর ওই পশুর গড়নের জন্য সঠিক ভাজক বের করে দেবে। <b>প্রতিটি পশুর জন্য আলাদা ক্যালিব্রেশন সংরক্ষিত থাকবে।</b></div>
+    <div class="grid g4">
+      <div><label>কোন পশু?</label><select id="cal_sp"></select></div>
+      <div><label>বুকের বেড় (সেমি)</label><input id="cal_g" type="text" inputmode="decimal" data-num></div>
+      <div><label>দৈর্ঘ্য (সেমি)</label><input id="cal_l" type="text" inputmode="decimal" data-num></div>
+      <div><label>স্কেলে আসল ওজন (কেজি)</label><input id="cal_w" type="text" inputmode="decimal" data-num></div>
+    </div>
+    <div class="row" style="margin-top:12px"><button data-act="calib">মিলিয়ে দেখুন</button></div>
+    <div id="calOut" style="margin-top:12px"></div>
+    <hr>
+    <h3>বর্তমান ভাজক</h3>
+    <div class="grid g4" id="divBox"></div>
+    <div class="muted" style="margin-top:8px">সংখ্যা <b>বাড়ালে</b> হিসাব করা ওজন কমবে, <b>কমালে</b> বাড়বে। ফিতার সূত্রটি মূলত গরুর জন্য তৈরি — <b>ছাগল ও ভেড়ায় ক্যালিব্রেশন না করলে বড় ভুল আসতে পারে।</b></div>
+  </div>
+
+  <div class="card"><h2>📖 হিসাবের ভিত্তি</h2>
+    <div class="spTabs" id="basisPick"></div>
+    <div class="tw"><table id="basisTable"></table></div>
+    <div class="alert"><b>মনে রাখুন:</b> এগুলো সাধারণ পুষ্টি নির্দেশিকা থেকে নেওয়া <b>শুরুর মান</b> — চূড়ান্ত সত্য নয়। জাত, বয়স, আবহাওয়া, খাবারের মান ও পশুর স্বাস্থ্য অনুযায়ী বদলায়। ৩০ দিন পরপর ওজন মেপে বাস্তব ফল দেখে নিজের খামারের জন্য ঠিক করে নিন। বড় পরিবর্তনের আগে পশু পুষ্টিবিদ বা উপজেলা প্রাণিসম্পদ কর্মকর্তার পরামর্শ নিন।</div>
+  </div>
+</div>
+</div>
+
+<footer>
+  <b>Jahid Agro Calculator</b> — জাহিদ এগ্রো<br> হিসাবগুলো সাধারণ পুষ্টি নির্দেশিকার ভিত্তিতে — চূড়ান্ত সিদ্ধান্তে পশু ডাক্তার বা পুষ্টিবিদের পরামর্শ নিন।
+</footer>
+
+<script>
+/* ---------- Bangla numerals ---------- */
+const BN='০১২৩৪৫৬৭৮৯';
+function bn(n,d=0){if(n===null||n===undefined||isNaN(n))return'—';
+  return Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}).replace(/\d/g,x=>BN[x]);}
+function bnp(n){return String(Math.round(n)).replace(/\d/g,x=>BN[x]);}
+function tk(n,d=0){return '৳'+bn(n,d);}
+/* সংখ্যা পরিষ্কার করা — বাংলা অঙ্ক, দাঁড়ি (।), কমা — সবই দশমিক হিসেবে বোঝে */
+function en(s){
+  s=String(s==null?'':s)
+    .replace(/[০-৯]/g,d=>BN.indexOf(d))   // বাংলা অঙ্ক → ইংরেজি
+    .replace(/[।॥·•٫]/g,'.')              // দাঁড়ি ও অন্যান্য চিহ্ন → দশমিক
+    .replace(/\s/g,'');
+  if(s.indexOf('.')===-1){                // দশমিক নেই, কিন্তু কমা আছে?
+    const m=s.match(/^(-?\d*),(\d{1,2})$/); // ৫,৫ বা ৫,২৫ → দশমিক ধরা হবে
+    if(m)s=m[1]+'.'+m[2];
+  }
+  s=s.replace(/,/g,'').replace(/[^0-9.\-]/g,'');
+  const i=s.indexOf('.');                 // একটির বেশি দশমিক থাকবে না
+  if(i>-1)s=s.slice(0,i+1)+s.slice(i+1).replace(/\./g,'');
+  if(s.lastIndexOf('-')>0)s=(s[0]==='-'?'-':'')+s.replace(/-/g,'');
+  return s;
+}
+function gv(id){const e=document.getElementById(id);return e?(+en(e.value)||0):0;}
+/* in-page messages (alert/confirm are blocked in some app windows) */
+function toast(msg,type){let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';document.body.appendChild(t);}
+  t.className=type==='err'?'err':'ok';t.innerHTML=msg;t.style.display='block';
+  clearTimeout(t._h);t._h=setTimeout(()=>{t.style.display='none';},4200);}
+function formMsg(html,type){const e=document.getElementById('formMsg');
+  e.innerHTML=html?'<div class="'+(type==='err'?'danger':'note')+'">'+html+'</div>':'';}
+/* টাইপ করার সময় কমা/দশমিক মুছে যাবে না — লেখা শেষ হলে ঠিক হয়ে যাবে */
+function typeClean(s){
+  s=String(s).replace(/[০-৯]/g,d=>BN.indexOf(d)).replace(/[।॥·•٫]/g,'.')
+    .replace(/\s/g,'').replace(/[^0-9.,\-]/g,'');
+  let seen=false;
+  s=s.replace(/[.,]/g,m=>{if(seen)return'';seen=true;return m;});
+  if(s.lastIndexOf('-')>0)s=(s[0]==='-'?'-':'')+s.replace(/-/g,'');
+  return s;
+}
+document.addEventListener('input',ev=>{const t=ev.target;
+  if(t&&t.tagName==='INPUT'&&t.hasAttribute('data-num')){
+    const v=t.value,c=typeClean(v);
+    if(v!==c){const p=t.selectionStart-(v.length-c.length);t.value=c;try{t.setSelectionRange(p,p);}catch(_){}}}},true);
+/* লেখা শেষ হলে কমাকে দশমিকে বদলে দাও (৫,৫ → ৫.৫) */
+document.addEventListener('change',ev=>{const t=ev.target;
+  if(t&&t.tagName==='INPUT'&&t.hasAttribute('data-num')&&!t.readOnly){
+    const c=en(t.value);if(t.value!==c)t.value=c;}},true);
+document.addEventListener('blur',ev=>{const t=ev.target;
+  if(t&&t.tagName==='INPUT'&&t.hasAttribute('data-num')&&!t.readOnly){
+    const c=en(t.value);if(t.value!==c)t.value=c;}},true);
+
+/* ---------- Species & stages ---------- */
+const SPECIES={
+ cow:{label:'🐄 গরু',short:'গরু',wtMin:20,wtMax:1200,waterMin:25,milkDiv:2.5,adgGood:800,adgMid:500,adgDef:800,
+  stages:{
+   fatten_start:{label:'মোটাতাজাকরণ — শুরু (০–৩০ দিন)',dmi:2.50,rough:60,conc:40,cp:12},
+   fatten_mid:{label:'মোটাতাজাকরণ — মাঝামাঝি (৩১–৯০ দিন)',dmi:2.75,rough:50,conc:50,cp:13},
+   fatten_final:{label:'মোটাতাজাকরণ — শেষ ধাপ (৯১+ দিন)',dmi:3.00,rough:40,conc:60,cp:14},
+   dairy:{label:'দুধেল গাভী',dmi:3.00,rough:60,conc:40,cp:15,milk:true},
+   pregnant:{label:'গাভীন (শেষ ৩ মাস)',dmi:2.50,rough:70,conc:30,cp:13},
+   young:{label:'বাছুর / বাড়ন্ত',dmi:3.00,rough:50,conc:50,cp:16},
+   maintain:{label:'রক্ষণাবেক্ষণ / বিশ্রাম',dmi:2.20,rough:80,conc:20,cp:10}}},
+
+ buffalo:{label:'🐃 মহিষ',short:'মহিষ',wtMin:30,wtMax:1200,waterMin:30,milkDiv:2.0,adgGood:700,adgMid:450,adgDef:700,
+  stages:{
+   fatten_start:{label:'মোটাতাজাকরণ — শুরু',dmi:2.30,rough:65,conc:35,cp:12},
+   fatten_mid:{label:'মোটাতাজাকরণ — মাঝামাঝি',dmi:2.60,rough:55,conc:45,cp:13},
+   fatten_final:{label:'মোটাতাজাকরণ — শেষ ধাপ',dmi:2.80,rough:45,conc:55,cp:13},
+   dairy:{label:'দুধেল মহিষ',dmi:3.00,rough:55,conc:45,cp:15,milk:true},
+   pregnant:{label:'গাভীন (শেষ ৩ মাস)',dmi:2.40,rough:70,conc:30,cp:13},
+   young:{label:'বাচ্চা / বাড়ন্ত',dmi:2.80,rough:50,conc:50,cp:16},
+   maintain:{label:'রক্ষণাবেক্ষণ / বিশ্রাম',dmi:2.00,rough:80,conc:20,cp:9}}},
+
+ goat:{label:'🐐 ছাগল',short:'ছাগল',wtMin:4,wtMax:150,waterMin:4,milkDiv:2.0,adgGood:120,adgMid:80,adgDef:120,
+  stages:{
+   fatten_start:{label:'মোটাতাজাকরণ — শুরু',dmi:3.20,rough:60,conc:40,cp:14},
+   fatten_mid:{label:'মোটাতাজাকরণ — মাঝামাঝি',dmi:3.50,rough:50,conc:50,cp:15},
+   fatten_final:{label:'মোটাতাজাকরণ — শেষ ধাপ',dmi:3.80,rough:45,conc:55,cp:15},
+   dairy:{label:'দুধেল ছাগী',dmi:4.00,rough:55,conc:45,cp:16,milk:true},
+   pregnant:{label:'গাভীন ছাগী (শেষ ৬ সপ্তাহ)',dmi:3.20,rough:65,conc:35,cp:14},
+   young:{label:'বাচ্চা / বাড়ন্ত',dmi:3.50,rough:50,conc:50,cp:17},
+   maintain:{label:'রক্ষণাবেক্ষণ / বিশ্রাম',dmi:2.80,rough:80,conc:20,cp:10}}},
+
+ sheep:{label:'🐑 ভেড়া',short:'ভেড়া',wtMin:4,wtMax:150,waterMin:4,milkDiv:2.0,adgGood:110,adgMid:70,adgDef:110,
+  stages:{
+   fatten_start:{label:'মোটাতাজাকরণ — শুরু',dmi:3.00,rough:60,conc:40,cp:13},
+   fatten_mid:{label:'মোটাতাজাকরণ — মাঝামাঝি',dmi:3.30,rough:50,conc:50,cp:14},
+   fatten_final:{label:'মোটাতাজাকরণ — শেষ ধাপ',dmi:3.50,rough:45,conc:55,cp:14},
+   dairy:{label:'দুধেল ভেড়ি',dmi:3.60,rough:55,conc:45,cp:15,milk:true},
+   pregnant:{label:'গাভীন ভেড়ি (শেষ ৬ সপ্তাহ)',dmi:3.00,rough:65,conc:35,cp:13},
+   young:{label:'বাচ্চা / বাড়ন্ত',dmi:3.30,rough:50,conc:50,cp:16},
+   maintain:{label:'রক্ষণাবেক্ষণ / বিশ্রাম',dmi:2.60,rough:80,conc:20,cp:10}}}
+};
+const CP_GRASS=8, CP_STRAW=3.5;
+const DEFAULT_MIX=[
+ {name:'ভুট্টা ভাঙা',pct:30,cp:9,price:38},{name:'সয়াবিন মিল',pct:20,cp:44,price:65},
+ {name:'গমের ভুসি',pct:17,cp:15,price:35},{name:'সরিষার খৈল',pct:15,cp:32,price:55},
+ {name:'চালের কুঁড়া',pct:12,cp:12,price:30},{name:'চিটাগুড়',pct:3,cp:4,price:40},
+ {name:'ভিটামিন-মিনারেল প্রিমিক্স',pct:2,cp:0,price:200},{name:'লবণ',pct:1,cp:0,price:25}];
+
+const S={animals:[],mix:JSON.parse(JSON.stringify(DEFAULT_MIX)),
+ settings:{dmGrass:20,dmStraw:90,dmConc:90,priceGrass:3,priceStraw:15,priceReady:45,cpReady:16,
+  concMode:'mix',roughGrassPct:60,waterPerKgDm:4,hot:0,
+  rate:{cow:450,buffalo:400,goat:700,sheep:650},
+  divisor:{cow:10840,buffalo:10840,goat:10840,sheep:10840}}};
+let uid=1, curSp='cow', basisSp='cow', filterSp='all', openId=null, editId=null;
+
+/* ---------- Engine ---------- */
+function concPrice(){return S.settings.concMode==='mix'?mixCost():S.settings.priceReady;}
+function concCp(){return S.settings.concMode==='mix'?mixCp():S.settings.cpReady;}
+function mixCost(){return S.mix.reduce((a,i)=>a+i.pct*i.price/100,0);}
+function mixCp(){return S.mix.reduce((a,i)=>a+i.pct*i.cp/100,0);}
+function mixPct(){return S.mix.reduce((a,i)=>a+ +i.pct,0);}
+
+function ration(c){
+  const SP=SPECIES[c.sp], P=SP.stages[c.stage], st=S.settings;
+  const base=c.weight*P.dmi/100;
+  let roughDM=base*P.rough/100, concDM=base*P.conc/100, milkExtra=0;
+  if(P.milk&&c.milk>0){milkExtra=c.milk/SP.milkDiv; concDM+=milkExtra*st.dmConc/100;}
+  const grassDM=roughDM*st.roughGrassPct/100, strawDM=roughDM-grassDM;
+  const grass=grassDM/(st.dmGrass/100), straw=strawDM/(st.dmStraw/100), conc=concDM/(st.dmConc/100);
+  const totDM=roughDM+concDM;
+  const cp=(grassDM*CP_GRASS+strawDM*CP_STRAW+concDM*concCp())/totDM;
+  let water=totDM*st.waterPerKgDm; if(water<SP.waterMin)water=SP.waterMin; if(+st.hot)water*=1.15;
+  const cost=grass*st.priceGrass+straw*st.priceStraw+conc*concPrice();
+  const rate=st.rate[c.sp];
+  const adgKg=(c.adg||0)/1000, costPerKgGain=adgKg>0?cost/adgKg:null;
+  const w=[];
+  const maxPct=(c.sp==='goat'||c.sp==='sheep')?5.2:4.2;
+  if(totDM/c.weight*100>maxPct)w.push({t:'bad',m:'মোট খাবার দেহওজনের '+bn(maxPct,1)+'%-এর বেশি — পশু এত খেতে পারবে না। ধাপ বা দুধের পরিমাণ যাচাই করুন।'});
+  const leaf=(c.sp==='goat'||c.sp==='sheep')?' '+SP.short+'-কে কাঁঠাল/ইপিল-ইপিল পাতা বা ডালজাতীয় সবুজ দিলেও প্রোটিন বাড়বে — শুধু দানাদারের উপর নির্ভর করতে হবে না।':'';
+  if(cp<P.cp-3)w.push({t:'bad',m:'প্রোটিন লক্ষ্যের অনেক কম ('+bn(cp,1)+'% বনাম '+bn(P.cp)+'%) — ওজন বৃদ্ধি আটকে যাবে। দানাদারে সয়াবিন মিল বা খৈল বাড়ান।'+leaf});
+  else if(cp<P.cp-1)w.push({t:'warn',m:'প্রোটিন লক্ষ্যের চেয়ে কম ('+bn(cp,1)+'% বনাম '+bn(P.cp)+'%) — দানাদারে সয়াবিন মিল বা খৈল বাড়ালে বৃদ্ধি ভালো হবে।'+leaf});
+  else if(cp<P.cp)w.push({t:'warn',m:'প্রোটিন সামান্য কম ('+bn(cp,1)+'%) — একটু বাড়ালে ভালো ফল পাবেন।'});
+  if(concDM/totDM*100>65)w.push({t:'bad',m:'দানাদার মোট খাবারের ৬৫%-এর বেশি — অ্যাসিডোসিসের ঝুঁকি। আঁশযুক্ত খাবার বাড়ান।'});
+  if(st.roughGrassPct<25)w.push({t:'warn',m:'কাঁচা ঘাস খুব কম — ভিটামিন A ঘাটতি ও হজমে সমস্যা হতে পারে।'});
+  if(costPerKgGain&&costPerKgGain>rate)w.push({t:'bad',m:'প্রতি কেজি বৃদ্ধির খরচ বাজার দরের চেয়ে বেশি — এই পশু লোকসানে যাচ্ছে।'});
+  if(c.method==='tape'&&(c.sp==='goat'||c.sp==='sheep')&&st.divisor[c.sp]===10840)
+    w.push({t:'warn',m:'ফিতার সূত্রটি গরুর জন্য তৈরি। '+SP.short+'-এর ক্যালিব্রেশন করা হয়নি — ওজন ভুল হতে পারে। সেটিংসে স্কেলের সাথে মিলিয়ে নিন।'});
+  return {base,totDM,roughDM,concDM,grassDM,strawDM,grass,straw,conc,milkExtra,cp,water,cost,costPerKgGain,rate,value:c.weight*rate,warns:w,P,SP};
+}
+
+/* ---------- Form UI ---------- */
+function pickSp(k){curSp=k;
+  const s=document.getElementById('c_stage');
+  s.innerHTML=Object.entries(SPECIES[k].stages).map(([x,v])=>'<option value="'+x+'">'+v.label+'</option>').join('');
+  s.value='fatten_mid';
+  document.getElementById('c_adg').value=SPECIES[k].adgDef;
+  document.getElementById('c_wt').placeholder=(k==='goat'||k==='sheep')?'২৫':'২৫০';
+  stageUI();renderSpPick();tape();
+}
+function stageUI(){const st=SPECIES[curSp].stages[document.getElementById('c_stage').value];
+  document.getElementById('milkWrap').style.display=st&&st.milk?'':'none';}
+function renderSpPick(){
+  document.getElementById('spPick').innerHTML=Object.entries(SPECIES).map(([k,v])=>
+    '<button class="spTab'+(k===curSp?' on':'')+'" data-act="spPick" data-arg="'+k+'">'+v.label+'</button>').join('');
+  document.getElementById('basisPick').innerHTML=Object.entries(SPECIES).map(([k,v])=>
+    '<button class="spTab'+(k===basisSp?' on':'')+'" data-act="basis" data-arg="'+k+'">'+v.label+'</button>').join('');
+  const counts={};Object.keys(SPECIES).forEach(k=>counts[k]=S.animals.filter(a=>a.sp===k).length);
+  document.getElementById('filterPick').innerHTML=
+    '<button class="spTab'+(filterSp==='all'?' on':'')+'" data-act="filter" data-arg="all">সব ('+bn(S.animals.length)+')</button>'+
+    Object.entries(SPECIES).filter(([k])=>counts[k]>0).map(([k,v])=>
+     '<button class="spTab'+(k===filterSp?' on':'')+'" data-act="filter" data-arg="'+k+'">'+v.label+' ('+bn(counts[k])+')</button>').join('');
+}
+function methodUI(){const m=document.getElementById('c_method').value;
+  document.getElementById('scaleBox').style.display=m==='scale'?'':'none';
+  document.getElementById('tapeBox').style.display=m==='tape'?'':'none';}
+function tape(){
+  const g=gv('t_g'),l=gv('t_l'),o=document.getElementById('tapeOut'),D=S.settings.divisor[curSp];
+  document.getElementById('tapeCalWarn').innerHTML=((curSp==='goat'||curSp==='sheep')&&D===10840)
+   ?'<div class="alert">⚠️ ফিতার এই সূত্রটি গরুর গড়নের জন্য তৈরি। <b>'+SPECIES[curSp].short+'-এ এখনো ক্যালিব্রেশন করা হয়নি</b> — সেটিংস ট্যাবে স্কেলের সাথে একবার মিলিয়ে নিন।</div>':'';
+  if(!g||!l){o.innerHTML='<span class="muted">বুকের বেড় ও দৈর্ঘ্য দুটোই দিন</span>';document.getElementById('c_wt2').value='';return;}
+  const w=(g*g*l)/D;
+  document.getElementById('c_wt2').value=w.toFixed(1);
+  o.innerHTML='<span class="pill ok">আনুমানিক ওজন '+bn(w,1)+' কেজি</span> <span class="muted">সূত্র: ('+bn(g)+'² × '+bn(l)+') ÷ '+bnp(D)+(D!==10840?' — <b>আপনার নিজের ক্যালিব্রেশন</b>':' — সাধারণ সূত্র, ±৫% ত্রুটি')+'</span>';
+}
+
+/* ---------- Animals ---------- */
+function addAnimal(){
+  const n=document.getElementById('c_name').value.trim(),meth=document.getElementById('c_method').value;
+  const w=meth==='scale'?gv('c_wt'):gv('c_wt2'),SP=SPECIES[curSp];
+  if(!n){formMsg('❌ <b>নাম / ট্যাগ নম্বর</b> ঘরটি খালি — কিছু লিখুন।','err');
+    document.getElementById('c_name').focus();toast('নাম / ট্যাগ নম্বর দিন','err');return;}
+  if(!w){formMsg(meth==='scale'?'❌ <b>ওজন</b> ঘরটি খালি — স্কেলের সংখ্যাটি লিখুন।':'❌ ফিতার <b>বুকের বেড়</b> ও <b>দৈর্ঘ্য</b> দুটোই দিন — তবেই ওজন হিসাব হবে।','err');
+    document.getElementById(meth==='scale'?'c_wt':'t_g').focus();toast('ওজন দেওয়া হয়নি','err');return;}
+  if(w<SP.wtMin||w>SP.wtMax){formMsg('❌ ওজন <b>'+bn(w,1)+' কেজি</b> — '+SP.short+'-এর ওজন '+bn(SP.wtMin)+' থেকে '+bn(SP.wtMax)+' কেজির মধ্যে হওয়ার কথা। উপরে সঠিক পশু বেছেছেন তো?','err');
+    toast('ওজন '+SP.short+'-এর জন্য মানানসই নয়','err');return;}
+  S.animals.push({id:uid++,sp:curSp,name:n,weight:w,method:meth,girth:gv('t_g'),len:gv('t_l'),
+   stage:document.getElementById('c_stage').value,milk:gv('c_milk'),adg:gv('c_adg'),buy:gv('c_buy')});
+  ['c_name','c_wt','t_g','t_l','c_wt2'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('tapeOut').innerHTML='';
+  formMsg('✅ <b>'+SP.label+' '+n+'</b> ('+bn(w,1)+' কেজি) তালিকায় যোগ হয়েছে — নিচে দেখুন।');
+  toast('✅ '+n+' যোগ হয়েছে');
+  render();
+  setTimeout(()=>{const el=document.getElementById('anList');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);
+}
+let delArm=null;
+function delAn(id){
+  if(delArm!==id){delArm=id;render();toast('মুছতে চাইলে আবার ✕ চাপুন','err');
+    setTimeout(()=>{if(delArm===id){delArm=null;render();}},4000);return;}
+  const a=S.animals.find(x=>x.id===id);
+  S.animals=S.animals.filter(x=>x.id!==id);
+  if(openId===id)openId=null; if(editId===id)editId=null; delArm=null;
+  toast('🗑 '+(a?a.name:'পশুটি')+' মুছে ফেলা হয়েছে');render();
+}
+function toggle(id){openId=openId===id?null:id;render();
+  if(openId){const d=document.getElementById('detail');if(d)d.scrollIntoView({behavior:'smooth',block:'start'});}}
+
+/* --- edit an animal in place --- */
+function startEdit(id){editId=id;openId=null;render();}
+function cancelEdit(){editId=null;render();}
+function editSpChange(id){
+  const sp=document.getElementById('e_sp_'+id).value,s=document.getElementById('e_stage_'+id);
+  s.innerHTML=Object.entries(SPECIES[sp].stages).map(([k,v])=>'<option value="'+k+'">'+v.label+'</option>').join('');
+  s.value='fatten_mid';editStageChange(id);
+}
+function editStageChange(id){
+  const sp=document.getElementById('e_sp_'+id).value,st=document.getElementById('e_stage_'+id).value;
+  document.getElementById('e_milkwrap_'+id).style.display=SPECIES[sp].stages[st].milk?'':'none';
+}
+function saveEdit(id){
+  const a=S.animals.find(x=>x.id===id);if(!a)return;
+  const name=document.getElementById('e_name_'+id).value.trim();
+  const sp=document.getElementById('e_sp_'+id).value,SP=SPECIES[sp];
+  const wt=gv('e_wt_'+id);
+  if(!name){toast('নাম / ট্যাগ নম্বর খালি রাখা যাবে না','err');document.getElementById('e_name_'+id).focus();return;}
+  if(!wt||wt<SP.wtMin||wt>SP.wtMax){toast(SP.short+'-এর ওজন '+bn(SP.wtMin)+'–'+bn(SP.wtMax)+' কেজির মধ্যে হতে হবে','err');document.getElementById('e_wt_'+id).focus();return;}
+  const old=a.weight;
+  a.name=name;a.sp=sp;a.stage=document.getElementById('e_stage_'+id).value;a.weight=wt;
+  a.method=document.getElementById('e_meth_'+id).value;
+  a.milk=gv('e_milk_'+id);a.adg=gv('e_adg_'+id);a.buy=gv('e_buy_'+id);
+  editId=null;render();
+  if(old!==wt){const d=wt-old;
+    toast('✅ ওজন '+bn(old,1)+' → '+bn(wt,1)+' কেজি ('+(d>0?'+':'−')+bn(Math.abs(d),1)+' কেজি)');}
+  else toast('✅ '+name+' সংরক্ষণ হয়েছে');
+}
+function editBox(c){
+  const SP=SPECIES[c.sp],id=c.id;
+  const stageOpts=Object.entries(SP.stages).map(([k,v])=>'<option value="'+k+'"'+(k===c.stage?' selected':'')+'>'+v.label+'</option>').join('');
+  const spOpts=Object.entries(SPECIES).map(([k,v])=>'<option value="'+k+'"'+(k===c.sp?' selected':'')+'>'+v.label+'</option>').join('');
+  return '<div class="anBox edit">'+
+   '<div class="anTop"><div><div class="nm">✏️ সম্পাদনা</div><div class="sub">তথ্য বদলে সংরক্ষণ করুন</div></div></div>'+
+   '<div class="anEdit">'+
+     '<div class="full"><label>নাম / ট্যাগ</label><input id="e_name_'+id+'" value="'+c.name.replace(/"/g,'&quot;')+'"></div>'+
+     '<div><label>পশু</label><select id="e_sp_'+id+'" data-chg="esp" data-arg="'+id+'">'+spOpts+'</select></div>'+
+     '<div><label>ওজন (কেজি)</label><input id="e_wt_'+id+'" type="text" inputmode="decimal" data-num value="'+c.weight+'"></div>'+
+     '<div class="full"><label>ধরন / ধাপ</label><select id="e_stage_'+id+'" data-chg="estage" data-arg="'+id+'">'+stageOpts+'</select></div>'+
+     '<div><label>মাপার পদ্ধতি</label><select id="e_meth_'+id+'">'+
+       '<option value="scale"'+(c.method==='scale'?' selected':'')+'>⚖️ স্কেল</option>'+
+       '<option value="tape"'+(c.method==='tape'?' selected':'')+'>📏 ফিতা</option></select></div>'+
+     '<div><label>ADG লক্ষ্য (গ্রাম)</label><input id="e_adg_'+id+'" type="text" inputmode="decimal" data-num value="'+(c.adg||0)+'"></div>'+
+     '<div id="e_milkwrap_'+id+'" style="display:'+(SP.stages[c.stage].milk?'':'none')+'"><label>দৈনিক দুধ (লিটার)</label><input id="e_milk_'+id+'" type="text" inputmode="decimal" data-num value="'+(c.milk||0)+'"></div>'+
+     '<div><label>ক্রয়মূল্য (৳)</label><input id="e_buy_'+id+'" type="text" inputmode="decimal" data-num value="'+(c.buy||0)+'"></div>'+
+   '</div>'+
+   '<div class="anAct"><button data-act="esave" data-arg="'+id+'">✔ সংরক্ষণ</button>'+
+     '<button class="sec" data-act="ecancel">✕ বাতিল</button></div></div>';
+}
+
+function anBox(c){
+  if(editId===c.id)return editBox(c);
+  const r=ration(c), bad=r.warns.some(x=>x.t==='bad'), warn=r.warns.length&&!bad;
+  let status='<span class="pill ok">লাভজনক</span>';
+  if(!r.costPerKgGain)status='<span class="pill warn">ADG দিন</span>';
+  else if(r.costPerKgGain>r.rate)status='<span class="pill bad">লোকসান</span>';
+  else if(r.costPerKgGain>r.rate*0.8)status='<span class="pill warn">মার্জিন কম</span>';
+  return '<div class="anBox'+(bad?' flag':'')+'">'+
+   '<div class="anTop"><div><div class="nm">'+r.SP.label+' '+c.name+'</div>'+
+     '<div class="sub">'+r.P.label+'</div></div>'+
+     '<button class="anX noprint" title="মুছে ফেলুন" data-act="del" data-arg="'+c.id+'">✕</button></div>'+
+   '<div class="anWt"><span>ওজন '+(c.method==='tape'?'📏 ফিতায়':'⚖️ স্কেলে')+'</span><b>'+bn(c.weight,1)+' কেজি</b></div>'+
+   '<div class="anFeed">'+
+     '<div><div class="n">🌱 কাঁচা ঘাস</div><div class="v">'+bn(r.grass,1)+'</div><div class="u">কেজি/দিন</div></div>'+
+     '<div><div class="n">🌾 খড়</div><div class="v">'+bn(r.straw,1)+'</div><div class="u">কেজি/দিন</div></div>'+
+     '<div><div class="n">🥣 দানাদার</div><div class="v">'+bn(r.conc,2)+'</div><div class="u">কেজি/দিন</div></div>'+
+   '</div>'+
+   '<div class="anMoney"><span>দৈনিক খরচ<br><b>'+tk(r.cost,0)+'</b></span>'+
+     '<span style="text-align:right">৳/কেজি বৃদ্ধি<br><b>'+(r.costPerKgGain?tk(r.costPerKgGain,0):'—')+'</b> '+status+'</span></div>'+
+   (r.warns.length?'<div class="anWarn">'+(bad?'⛔ ':'⚠️ ')+r.warns[0].m+(r.warns.length>1?' <b>(+'+bn(r.warns.length-1)+' টি আরও)</b>':'')+'</div>':'')+
+   '<div class="anAct noprint"><button data-act="edit" data-arg="'+c.id+'">✏️ সম্পাদনা</button>'+
+     '<button class="sec" data-act="detail" data-arg="'+c.id+'">'+(openId===c.id?'✕ বন্ধ':'📋 বিস্তারিত')+'</button>'+
+     '<button class="sec" style="flex:0 0 auto" title="ঔষধের ডোজ" data-act="medFor" data-arg="'+c.id+'">💊</button></div>'+
+   '</div>';
+}
+
+function renderAnimals(){
+  const el=document.getElementById('anList');
+  document.getElementById('anCount').textContent=S.animals.length?'('+bn(S.animals.length)+' টি)':'';
+  if(!S.animals.length){el.innerHTML='<div class="note">এখনো কোনো পশু যোগ করা হয়নি। উপরের ফর্মে যোগ করুন।</div>';document.getElementById('detail').innerHTML='';return;}
+  const list=S.animals.filter(a=>filterSp==='all'||a.sp===filterSp)
+    .sort((a,b)=>Object.keys(SPECIES).indexOf(a.sp)-Object.keys(SPECIES).indexOf(b.sp));
+  el.innerHTML=list.length?'<div class="anGrid">'+list.map(anBox).join('')+'</div>':'<div class="note">এই পশু নেই।</div>';
+  document.getElementById('detail').innerHTML=openId?detailHtml(S.animals.find(a=>a.id===openId)):'';
+}
+
+function detailHtml(c){
+  if(!c)return'';
+  const r=ration(c),st=S.settings,pct=x=>Math.round(x/r.totDM*100);
+  let h='<div class="card" style="border:2px solid var(--g3)"><h2>'+r.SP.label+' — '+c.name+' | বিস্তারিত রেশন</h2>';
+  if(c.method==='tape'&&c.girth&&c.len)h+='<div class="muted" style="margin-bottom:10px">📏 ফিতার মাপ: বেড় '+bn(c.girth)+' সেমি, দৈর্ঘ্য '+bn(c.len)+' সেমি → ভাজক '+bnp(st.divisor[c.sp])+'</div>';
+  h+='<div class="grid g3" style="margin-bottom:14px">'+
+   '<div class="stat s1"><div class="l">ওজন — '+(c.method==='tape'?'📏 ফিতায়':'⚖️ স্কেলে')+' মাপা</div><div class="v">'+bn(c.weight,1)+' কেজি</div></div>'+
+   '<div class="stat s2"><div class="l">দৈনিক শুষ্ক খাবার</div><div class="v">'+bn(r.totDM,2)+' কেজি</div></div>'+
+   '<div class="stat s3"><div class="l">প্রোটিন (CP)</div><div class="v">'+bn(r.cp,1)+'%</div></div>'+
+   '<div class="stat s6"><div class="l">দৈনিক খরচ</div><div class="v">'+tk(r.cost,0)+'</div></div>'+
+   '<div class="stat s5"><div class="l">পানি লাগবে</div><div class="v">'+bn(r.water,0)+' লিটার</div></div>'+
+   '<div class="stat '+(r.costPerKgGain&&r.costPerKgGain>r.rate?'s4':'s2')+'"><div class="l">প্রতি কেজি বৃদ্ধির খরচ</div><div class="v">'+(r.costPerKgGain?tk(r.costPerKgGain,0):'—')+'</div></div></div>';
+  h+='<h3>🥣 প্রতিদিন যা খাওয়াতে হবে</h3><div class="grid g3">'+
+   '<div class="feedbox"><div class="n">🌱 কাঁচা ঘাস</div><div class="q">'+bn(r.grass,1)+'</div><div class="c">কেজি | '+tk(r.grass*st.priceGrass,0)+'</div></div>'+
+   '<div class="feedbox"><div class="n">🌾 খড়</div><div class="q">'+bn(r.straw,1)+'</div><div class="c">কেজি | '+tk(r.straw*st.priceStraw,0)+'</div></div>'+
+   '<div class="feedbox"><div class="n">🥣 দানাদার</div><div class="q">'+bn(r.conc,2)+'</div><div class="c">কেজি | '+tk(r.conc*concPrice(),0)+'</div></div></div>';
+  if(r.milkExtra>0)h+='<div class="note">🥛 এর মধ্যে <b>'+bn(r.milkExtra,2)+' কেজি</b> দানাদার শুধু দুধের জন্য অতিরিক্ত (প্রতি '+bn(r.SP.milkDiv,1)+' লিটার দুধে ১ কেজি)।</div>';
+  h+='<h3>⚖️ খাবারের গঠন (শুষ্ক পদার্থে)</h3><div class="bar">'+
+   '<div style="width:'+pct(r.grassDM)+'%;background:#43a047">'+(pct(r.grassDM)>7?'ঘাস '+bn(pct(r.grassDM))+'%':'')+'</div>'+
+   '<div style="width:'+pct(r.strawDM)+'%;background:#8d6e63">'+(pct(r.strawDM)>7?'খড় '+bn(pct(r.strawDM))+'%':'')+'</div>'+
+   '<div style="width:'+pct(r.concDM)+'%;background:#ef6c00">'+(pct(r.concDM)>7?'দানাদার '+bn(pct(r.concDM))+'%':'')+'</div></div>';
+  h+='<h3>📅 কত দিনে কত লাগবে</h3><div class="tw"><table class="numtbl"><tr><th>সময়</th><th>ঘাস</th><th>খড়</th><th>দানাদার</th><th>খরচ</th></tr>';
+  [['১ দিন',1],['৭ দিন',7],['৩০ দিন',30],['৯০ দিন',90]].forEach(([l,d])=>
+   h+='<tr><td><b>'+l+'</b></td><td>'+bn(r.grass*d,1)+'</td><td>'+bn(r.straw*d,1)+'</td><td>'+bn(r.conc*d,1)+'</td><td><b>'+tk(r.cost*d,0)+'</b></td></tr>');
+  h+='</table></div><div class="muted">সব পরিমাণ কেজিতে।</div>';
+  if(c.adg>0){
+    const gain=c.adg/1000*30,cost30=r.cost*30,valGain=gain*r.rate;
+    const band=c.adg>=r.SP.adgGood?'<span class="pill ok">ভালো</span>':c.adg>=r.SP.adgMid?'<span class="pill warn">মাঝারি</span>':'<span class="pill bad">কম</span>';
+    h+='<h3>💰 ৩০ দিনের পূর্বাভাস</h3><div class="tw"><table>'+
+     '<tr><td>লক্ষ্য ADG</td><td><b>'+bn(c.adg)+' গ্রাম/দিন</b> '+band+' <span class="muted">('+r.SP.short+'-এ ভালো ≥ '+bn(r.SP.adgGood)+' গ্রাম)</span></td></tr>'+
+     '<tr><td>৩০ দিনে ওজন বাড়বে</td><td><b>'+bn(gain,1)+' কেজি</b> → '+bn(c.weight+gain,1)+' কেজি</td></tr>'+
+     '<tr><td>৩০ দিনের খাবার খরচ</td><td>'+tk(cost30,0)+'</td></tr>'+
+     '<tr><td>বাড়তি ওজনের বাজার মূল্য</td><td>'+tk(valGain,0)+' <span class="muted">(৳'+bn(r.rate)+'/কেজি)</span></td></tr>'+
+     '<tr style="background:'+(valGain-cost30>=0?'#e6f4ea':'#fdeaea')+'"><td><b>নিট লাভ / ক্ষতি</b></td><td><b>'+tk(valGain-cost30,0)+'</b> '+(valGain-cost30>=0?'<span class="pill ok">লাভ</span>':'<span class="pill bad">ক্ষতি</span>')+'</td></tr></table></div>'+
+     '<div class="muted">শুধু খাবারের খরচ ধরা হয়েছে। শ্রমিক, ঔষধ, বিদ্যুৎ, ঘর যোগ করলে প্রকৃত লাভ কমবে।</div>';
+  }
+  if(r.warns.length){h+='<h3>⚠️ সতর্কতা</h3>';r.warns.forEach(w=>h+='<div class="'+(w.t==='bad'?'danger':'alert')+'">'+w.m+'</div>');}
+  else h+='<div class="note">✅ এই রেশনে বড় কোনো সমস্যা পাওয়া যায়নি।</div>';
+  return h+'<div class="row noprint" style="margin-top:12px"><button class="sec sm" data-act="detail" data-arg="'+c.id+'">✕ বন্ধ করুন</button></div></div>';
+}
+
+/* ---------- Mix ---------- */
+function renderMix(){
+  document.getElementById('mixCard').style.display=S.settings.concMode==='mix'?'':'none';
+  document.getElementById('readyWrap').style.display=S.settings.concMode==='ready'?'':'none';
+  document.getElementById('readyCpWrap').style.display=S.settings.concMode==='ready'?'':'none';
+  let h='<tr><th>উপাদান</th><th>অনুপাত (%)</th><th>প্রোটিন CP (%)</th><th>দাম (৳/কেজি)</th><th>খরচে অবদান</th><th></th></tr>';
+  S.mix.forEach((i,ix)=>h+='<tr><td><input value="'+i.name+'" data-chg="mixSet" data-arg="'+ix+':name"></td>'+
+   '<td><input type="text" inputmode="decimal" data-num value="'+i.pct+'" data-chg="mixSet" data-arg="'+ix+':pct"></td>'+
+   '<td><input type="text" inputmode="decimal" data-num value="'+i.cp+'" data-chg="mixSet" data-arg="'+ix+':cp"></td>'+
+   '<td><input type="text" inputmode="decimal" data-num value="'+i.price+'" data-chg="mixSet" data-arg="'+ix+':price"></td>'+
+   '<td>'+tk(i.pct*i.price/100,2)+'</td><td class="noprint"><button class="sec sm" data-act="mixDel" data-arg="'+ix+'">✕</button></td></tr>');
+  document.getElementById('mixTable').innerHTML=h;
+  const sum=mixPct(),cp=mixCp();
+  document.getElementById('mixSum').textContent=bn(sum,1)+'%';
+  document.getElementById('mixCp').textContent=bn(cp,1)+'%';
+  document.getElementById('mixCost').textContent=tk(mixCost(),2);
+  let m='';
+  if(Math.abs(sum-100)>0.5)m+='<div class="danger">অনুপাতের যোগফল '+bn(sum,1)+'% — <b>১০০% করতে হবে</b>, নইলে হিসাব ভুল হবে।</div>';
+  if(cp<14)m+='<div class="alert">দানাদারে প্রোটিন '+bn(cp,1)+'% — মোটাতাজাকরণ ও দুধেল পশুর জন্য কম। সয়াবিন মিল বা খৈল বাড়ান।</div>';
+  if(cp>24)m+='<div class="alert">প্রোটিন '+bn(cp,1)+'% — প্রয়োজনের বেশি। অতিরিক্ত প্রোটিন টাকার অপচয়।</div>';
+  if(Math.abs(sum-100)<=0.5){const d=S.settings.priceReady-mixCost();
+   m+='<div class="note">রেডিমেড ফিড ৳'+bn(S.settings.priceReady)+'/কেজি ধরলে আপনার মিক্স <b>'+(d>0?'৳'+bn(d,2)+' সস্তা':'৳'+bn(-d,2)+' দামি')+'</b> প্রতি কেজিতে।</div>';}
+  m+='<div class="note">💡 ছাগল-ভেড়ার বাচ্চা ও দুধেল পশুর জন্য বেশি প্রোটিন লাগে। একটাই মিক্স সব পশুর জন্য যথেষ্ট নয় — প্রয়োজনে আলাদা ফর্মুলা বানিয়ে ফাইল আকারে সেভ করে রাখুন।</div>';
+  document.getElementById('mixMsg').innerHTML=m;
+  const bkg=gv('batchKg');
+  let b='<tr><th>উপাদান</th><th>পরিমাণ (কেজি)</th><th>খরচ (৳)</th></tr>';
+  S.mix.forEach(i=>b+='<tr><td>'+i.name+'</td><td><b>'+bn(bkg*i.pct/100,2)+'</b></td><td>'+tk(bkg*i.pct/100*i.price,0)+'</td></tr>');
+  b+='<tr style="background:#f4f8f5"><td><b>মোট</b></td><td><b>'+bn(bkg*mixPct()/100,2)+' কেজি</b></td><td><b>'+tk(bkg*mixCost(),0)+'</b></td></tr>';
+  document.getElementById('batchTable').innerHTML=b;
+}
+function addIng(){S.mix.push({name:'নতুন উপাদান',pct:0,cp:0,price:0});render();}
+function resetMix(){S.mix=JSON.parse(JSON.stringify(DEFAULT_MIX));render();toast('↺ ডিফল্ট ফর্মুলায় ফেরানো হয়েছে');}
+
+/* ---------- Medicine ---------- */
+function medFields(){const m=document.getElementById('m_mode').value;
+  document.getElementById('m_concWrap').style.display=m==='mgkg'?'':'none';
+  document.getElementById('m_doseLbl').textContent=({mgkg:'ডোজ (মিগ্রা/কেজি)',mlkg:'ডোজ (মিলি/কেজি)',ml50:'ডোজ (মিলি/৫০ কেজি)',ml10:'ডোজ (মিলি/১০ কেজি)'})[m];}
+function calcMed(){
+  const o=document.getElementById('medOut');
+  let wt=gv('m_wt'),who='সরাসরি ওজন',sp='';
+  if(!wt){const a=S.animals.find(x=>x.id===+document.getElementById('m_an').value);
+    if(a){wt=a.weight;who=a.name;sp=SPECIES[a.sp].label;}}
+  const dose=gv('m_dose'),mode=document.getElementById('m_mode').value,conc=gv('m_conc');
+  const form=document.getElementById('m_form').value,times=gv('m_times')||1,days=gv('m_days')||1;
+  const name=document.getElementById('m_name').value.trim()||'ঔষধ',price=gv('m_price');
+  if(!wt){o.innerHTML='<div class="danger">পশু নির্বাচন করুন অথবা ওজন লিখুন।</div>';return;}
+  if(!dose){o.innerHTML='<div class="danger">ঔষধের লেবেল দেখে ডোজ বসান।</div>';return;}
+  let per,unit,mg=null;
+  if(mode==='mgkg'){
+    if(!conc){o.innerHTML='<div class="danger">ঘনত্ব ছাড়া হিসাব করা যাবে না। বোতল/পাতার গায়ে লেখা <b>মিগ্রা/মিলি</b> বা <b>মিগ্রা/বড়ি</b> বসান।</div>';return;}
+    mg=dose*wt;per=mg/conc;unit=form==='tab'?'টি বড়ি':'মিলি';
+  } else {per=dose*wt/({mlkg:1,ml50:50,ml10:10}[mode]);unit='মিলি';}
+  const total=per*times*days;
+  let h='<div class="card" style="margin-top:16px;border:2px solid var(--g3)"><h2>💊 '+name+' — '+sp+' '+who+' ('+bn(wt,1)+' কেজি)</h2>'+
+   '<div class="grid g3"><div class="stat s3"><div class="l">এক বারের ডোজ</div><div class="v">'+bn(per,2)+' '+unit+'</div></div>'+
+   '<div class="stat s1"><div class="l">দৈনিক ('+bn(times)+' বার)</div><div class="v">'+bn(per*times,2)+' '+unit+'</div></div>'+
+   '<div class="stat s5"><div class="l">পুরো কোর্স ('+bn(days)+' দিন)</div><div class="v">'+bn(total,2)+' '+unit+'</div></div></div>';
+  if(mg!==null)h+='<div class="note">হিসাব: '+bn(dose,2)+' মিগ্রা/কেজি × '+bn(wt,1)+' কেজি = <b>'+bn(mg,1)+' মিগ্রা</b> → ÷ '+bn(conc,1)+' ঘনত্ব = <b>'+bn(per,2)+' '+unit+'</b></div>';
+  if(per<1)h+='<div class="alert">ডোজ ১ '+unit+'-এর কম — ছোট পশুতে এত অল্প পরিমাণ সঠিকভাবে মাপা কঠিন। মাপার সিরিঞ্জ ব্যবহার করুন, আন্দাজে দেবেন না।</div>';
+  if(form==='tab'&&per%1!==0)h+='<div class="alert">বড়ির সংখ্যা পূর্ণ নয় ('+bn(per,2)+')। বড়ি ভাঙলে ডোজ অনির্ভুল হয় — পশু ডাক্তারের সাথে কথা বলুন।</div>';
+  if(price>0)h+='<div class="note">💰 কোর্সের আনুমানিক ঔষধ খরচ: <b>'+tk(total*price,0)+'</b></div>';
+  const meat=gv('m_meat'),milk=gv('m_milk');
+  if(meat||milk){
+    const last=new Date(Date.now()+(days-1)*864e5),f=x=>bn(x.getDate())+'/'+bn(x.getMonth()+1)+'/'+bn(x.getFullYear());
+    h+='<h3>🚫 উইথড্রয়াল — এই তারিখের আগে বিক্রি করবেন না</h3><div class="tw"><table>'+
+     '<tr><td>কোর্স শেষ হবে</td><td><b>'+f(last)+'</b></td></tr>';
+    if(meat)h+='<tr style="background:#fdeaea"><td>🥩 মাংসের জন্য নিরাপদ</td><td><b>'+f(new Date(last.getTime()+meat*864e5))+'</b> ('+bn(meat)+' দিন পর)</td></tr>';
+    if(milk)h+='<tr style="background:#fff6e5"><td>🥛 দুধ বিক্রির জন্য নিরাপদ</td><td><b>'+f(new Date(last.getTime()+milk*864e5))+'</b> ('+bn(milk)+' দিন পর)</td></tr>';
+    h+='</table></div><div class="alert">উইথড্রয়াল সময়ের আগে দুধ বা মাংস বিক্রি করলে ঔষধের অবশিষ্টাংশ থেকে যায় — ক্রেতার জন্য ক্ষতিকর ও আইনত নিষিদ্ধ।</div>';
+  }
+  h+='<div class="danger">হিসাবটি আপনার দেওয়া সংখ্যার উপর ভিত্তি করে। প্রয়োগের আগে লেবেল ও পশু ডাক্তারের সাথে আরেকবার মিলিয়ে নিন।</div></div>';
+  o.innerHTML=h;
+}
+
+/* ---------- Summary ---------- */
+function renderSum(){
+  const st=S.settings;let T={n:0,wt:0,g:0,s:0,c:0,cost:0,water:0};
+  const per={};Object.keys(SPECIES).forEach(k=>per[k]={n:0,wt:0,g:0,s:0,c:0,cost:0,water:0,gain:0});
+  S.animals.forEach(a=>{const r=ration(a),p=per[a.sp];
+    p.n++;p.wt+=a.weight;p.g+=r.grass;p.s+=r.straw;p.c+=r.conc;p.cost+=r.cost;p.water+=r.water;p.gain+=(a.adg||0)/1000;
+    T.n++;T.wt+=a.weight;T.g+=r.grass;T.s+=r.straw;T.c+=r.conc;T.cost+=r.cost;T.water+=r.water;});
+  document.getElementById('sumStats').innerHTML=
+   '<div class="stat s1"><div class="l">মোট পশু</div><div class="v">'+bn(T.n)+' টি</div></div>'+
+   '<div class="stat s2"><div class="l">মোট জীবিত ওজন</div><div class="v">'+bn(T.wt,0)+' কেজি</div></div>'+
+   '<div class="stat s3"><div class="l">গড় ওজন</div><div class="v">'+bn(T.n?T.wt/T.n:0,1)+' কেজি</div></div>'+
+   '<div class="stat s6"><div class="l">দৈনিক খাবার খরচ</div><div class="v">'+tk(T.cost,0)+'</div></div>'+
+   '<div class="stat s4"><div class="l">মাসিক খাবার খরচ</div><div class="v">'+tk(T.cost*30,0)+'</div></div>'+
+   '<div class="stat s5"><div class="l">দৈনিক পানি</div><div class="v">'+bn(T.water,0)+' লি</div></div>';
+  let sp='<tr><th>পশু</th><th>সংখ্যা</th><th>মোট ওজন</th><th>ঘাস/দিন</th><th>খড়/দিন</th><th>দানাদার/দিন</th><th>খরচ/দিন</th><th>মাসিক খরচ</th></tr>';
+  Object.entries(SPECIES).forEach(([k,v])=>{const p=per[k];if(!p.n)return;
+   sp+='<tr><td>'+v.label+'</td><td>'+bn(p.n)+' টি</td><td>'+bn(p.wt,0)+' কেজি</td><td>'+bn(p.g,1)+'</td><td>'+bn(p.s,1)+'</td><td>'+bn(p.c,2)+'</td><td><b>'+tk(p.cost,0)+'</b></td><td><b>'+tk(p.cost*30,0)+'</b></td></tr>';});
+  if(!T.n)sp+='<tr><td colspan="8" class="muted">এখনো কোনো পশু যোগ করা হয়নি।</td></tr>';
+  document.getElementById('spTable').innerHTML=sp;
+  document.getElementById('sumFeed').innerHTML=
+   '<div class="feedbox"><div class="n">🌱 কাঁচা ঘাস</div><div class="q">'+bn(T.g,1)+'</div><div class="c">কেজি/দিন</div></div>'+
+   '<div class="feedbox"><div class="n">🌾 খড়</div><div class="q">'+bn(T.s,1)+'</div><div class="c">কেজি/দিন</div></div>'+
+   '<div class="feedbox"><div class="n">🥣 দানাদার</div><div class="q">'+bn(T.c,2)+'</div><div class="c">কেজি/দিন</div></div>'+
+   '<div class="feedbox"><div class="n">💧 পানি</div><div class="q">'+bn(T.water,0)+'</div><div class="c">লিটার/দিন</div></div>';
+  let m='<tr><th>খাবার</th><th>দৈনিক</th><th>৭ দিন</th><th>৩০ দিন</th><th>মাসিক খরচ</th></tr>';
+  [['🌱 কাঁচা ঘাস',T.g,st.priceGrass],['🌾 খড়',T.s,st.priceStraw],['🥣 দানাদার',T.c,concPrice()]].forEach(([n,q,p])=>
+   m+='<tr><td>'+n+'</td><td>'+bn(q,1)+' কেজি</td><td>'+bn(q*7,1)+' কেজি</td><td><b>'+bn(q*30,0)+' কেজি</b></td><td><b>'+tk(q*30*p,0)+'</b></td></tr>');
+  m+='<tr style="background:#f4f8f5"><td><b>মোট</b></td><td colspan="3"></td><td><b>'+tk(T.cost*30,0)+'</b></td></tr>';
+  document.getElementById('monthTable').innerHTML=m;
+  let p='<tr><th>পশু</th><th>নাম</th><th>ওজন</th><th>বাজার মূল্য</th><th>দৈনিক খরচ</th><th>৳/কেজি বৃদ্ধি</th><th>অবস্থা</th></tr>';
+  S.animals.forEach(a=>{const r=ration(a);
+   let s='<span class="pill ok">লাভজনক</span>';
+   if(!r.costPerKgGain)s='<span class="pill warn">ADG দিন</span>';
+   else if(r.costPerKgGain>r.rate)s='<span class="pill bad">লোকসান</span>';
+   else if(r.costPerKgGain>r.rate*0.8)s='<span class="pill warn">মার্জিন কম</span>';
+   p+='<tr><td>'+r.SP.label+'</td><td><b>'+a.name+'</b></td><td>'+bn(a.weight,1)+' কেজি</td><td>'+tk(r.value,0)+'</td><td>'+tk(r.cost,0)+'</td><td>'+(r.costPerKgGain?tk(r.costPerKgGain,0):'—')+'</td><td>'+s+'</td></tr>';});
+  if(!T.n)p+='<tr><td colspan="7" class="muted">এখনো কোনো পশু যোগ করা হয়নি।</td></tr>';
+  document.getElementById('profitTable').innerHTML=p;
+  let pm='';
+  if(T.n){let gval=0;Object.entries(per).forEach(([k,x])=>gval+=x.gain*st.rate[k]);
+   pm='<div class="note">পুরো খামারের দৈনিক হিসাব: খাবার খরচ <b>'+tk(T.cost,0)+'</b>, লক্ষ্য অনুযায়ী ওজন বৃদ্ধির মূল্য <b>'+tk(gval,0)+'</b> → '+
+    (gval-T.cost>=0?'<span class="pill ok">দৈনিক নিট '+tk(gval-T.cost,0)+' লাভ</span>':'<span class="pill bad">দৈনিক নিট '+tk(T.cost-gval,0)+' ক্ষতি</span>')+
+    '<br><span class="muted">শুধু খাবার ধরা হয়েছে। শ্রমিক, ঔষধ, বিদ্যুৎ, ঘর ও মৃত্যুঝুঁকি যোগ করলে প্রকৃত লাভ কমবে। ৩০ দিন পর ওজন মেপে ADG লক্ষ্য যাচাই করুন।</span></div>';}
+  document.getElementById('profitMsg').innerHTML=pm;
+  const SP=SPECIES[basisSp];
+  let b='<tr><th>'+SP.label+' — ধরন / ধাপ</th><th>দৈনিক খাবার (দেহওজনের %)</th><th>আঁশ : দানাদার</th><th>প্রোটিন লক্ষ্য (CP%)</th></tr>';
+  Object.values(SP.stages).forEach(x=>b+='<tr><td>'+x.label+'</td><td>'+bn(x.dmi,2)+'%</td><td>'+bn(x.rough)+' : '+bn(x.conc)+'</td><td>'+bn(x.cp)+'%</td></tr>');
+  b+='<tr style="background:#f4f8f5"><td><b>ভালো ADG</b></td><td colspan="3"><b>'+bn(SP.adgGood)+' গ্রাম/দিন বা বেশি</b> | মাঝারি '+bn(SP.adgMid)+'–'+bn(SP.adgGood-1)+' | কম '+bn(SP.adgMid)+'-এর নিচে</td></tr>';
+  b+='<tr><td>ন্যূনতম পানি</td><td colspan="3">'+bn(SP.waterMin)+' লিটার/দিন | দুধের জন্য প্রতি '+bn(SP.milkDiv,1)+' লিটারে ১ কেজি দানাদার</td></tr>';
+  document.getElementById('basisTable').innerHTML=b;
+}
+
+/* ---------- Calibration & settings ---------- */
+function calib(){
+  const sp=document.getElementById('cal_sp').value,g=gv('cal_g'),l=gv('cal_l'),a=gv('cal_w');
+  const o=document.getElementById('calOut');
+  if(!g||!l||!a){o.innerHTML='<div class="alert">বেড়, দৈর্ঘ্য ও আসল ওজন — তিনটিই পূরণ করুন।</div>';return;}
+  const est=(g*g*l)/10840,D=Math.round(g*g*l/a),err=(est-a)/a*100;
+  let h='<div class="tw"><table>'+
+   '<tr><td>পশু</td><td><b>'+SPECIES[sp].label+'</b></td></tr>'+
+   '<tr><td>সাধারণ সূত্রে আসে</td><td><b>'+bn(est,1)+' কেজি</b></td></tr>'+
+   '<tr><td>স্কেলে আসল ওজন</td><td><b>'+bn(a,1)+' কেজি</b></td></tr>'+
+   '<tr><td>পার্থক্য</td><td><b>'+bn(Math.abs(est-a),1)+' কেজি ('+bn(Math.abs(err),1)+'% '+(err>0?'বেশি দেখাচ্ছে':'কম দেখাচ্ছে')+')</b></td></tr>'+
+   '<tr style="background:#f4f8f5"><td><b>'+SPECIES[sp].short+'-এর জন্য সঠিক ভাজক</b></td><td><b>'+bnp(D)+'</b> (সাধারণ ১০৮৪০)</td></tr></table></div>';
+  h+=Math.abs(err)<3?'<div class="note">✅ পার্থক্য ৩%-এর কম — সাধারণ সূত্রই ভালো কাজ করছে।</div>'
+    :'<div class="alert">পার্থক্য '+bn(Math.abs(err),1)+'% — ভাজক <b>'+bnp(D)+'</b> ব্যবহার করলে ফিতার মাপ অনেক বেশি সঠিক হবে।</div>';
+  h+='<div class="row" style="margin-top:10px"><button data-act="setDiv" data-arg="'+sp+':'+D+'">✔ '+bnp(D)+' ব্যবহার করুন</button>'+
+   '<button class="sec" data-act="setDiv" data-arg="'+sp+':10840">↺ সাধারণ সূত্রে ফিরুন</button></div>'+
+   '<div class="muted" style="margin-top:8px">৩–৫টি ভিন্ন আকারের পশু মেপে গড় ভাজক বের করলে সবচেয়ে ভালো ফল পাবেন।</div>';
+  o.innerHTML=h;
+}
+const SET_IDS=['priceGrass','priceStraw','dmGrass','dmStraw','dmConc','roughGrassPct','waterPerKgDm','hot'];
+function fillSet(){
+  SET_IDS.forEach(k=>document.getElementById(k).value=S.settings[k]);
+  document.getElementById('priceReady').value=S.settings.priceReady;
+  document.getElementById('cpReady').value=S.settings.cpReady;
+  document.getElementById('concMode').value=S.settings.concMode;
+  document.getElementById('rateBox').innerHTML=Object.entries(SPECIES).map(([k,v])=>
+   '<div><label>'+v.label+'</label><input type="text" inputmode="decimal" data-num id="rate_'+k+'" value="'+S.settings.rate[k]+'"></div>').join('');
+  document.getElementById('divBox').innerHTML=Object.entries(SPECIES).map(([k,v])=>
+   '<div><label>'+v.label+'</label><input type="text" inputmode="decimal" data-num id="div_'+k+'" value="'+S.settings.divisor[k]+'"></div>').join('');
+  document.getElementById('cal_sp').innerHTML=Object.entries(SPECIES).map(([k,v])=>'<option value="'+k+'">'+v.label+'</option>').join('');
+  document.getElementById('concModeSlot').innerHTML='<label>দানাদার কোথা থেকে?</label>'+
+   '<select data-chg="concMode">'+
+   '<option value="mix"'+(S.settings.concMode==='mix'?' selected':'')+'>নিজে মিক্স করি</option>'+
+   '<option value="ready"'+(S.settings.concMode==='ready'?' selected':'')+'>রেডিমেড ফিড কিনি</option></select>';
+  const mixMode=S.settings.concMode==='mix';
+  document.getElementById('concPriceSlot').innerHTML=
+   '<label>দানাদারের দাম (৳/কেজি)<br><span style="font-weight:400;color:var(--muted);font-size:11.5px">'+
+   (mixMode?'এখন নিজের মিক্স থেকে হিসাব — এখানে দাম লিখলে রেডিমেড ধরা হবে':'রেডিমেড ফিডের দাম | নিজের মিক্সে খরচ পড়ত ৳'+bn(mixCost(),2))+
+   '</span></label><input type="text" inputmode="decimal" data-num value="'+(mixMode?mixCost().toFixed(2):S.settings.priceReady)+'" data-chg="concPrice">';
+}
+function setConcPrice(v){
+  const p=+en(v)||0;
+  if(p<=0){toast('দাম শূন্যের বেশি হতে হবে','err');fillSet();render();return;}
+  const wasMix=S.settings.concMode==='mix';
+  if(wasMix&&Math.abs(p-mixCost())<0.01){fillSet();return;}
+  S.settings.priceReady=p;S.settings.concMode='ready';
+  toast(wasMix?'দানাদার এখন রেডিমেড দাম ৳'+bn(p,2)+'/কেজি ধরে হিসাব হচ্ছে':'✅ দানাদারের দাম ৳'+bn(p,2)+'/কেজি');
+  fillSet();render();
+}
+function saveSet(){
+  SET_IDS.forEach(k=>S.settings[k]=gv(k));
+  Object.keys(SPECIES).forEach(k=>{S.settings.rate[k]=gv('rate_'+k)||S.settings.rate[k];
+    S.settings.divisor[k]=gv('div_'+k)||10840;});
+  render();toast('✅ সেটিংস সংরক্ষণ হয়েছে');
+}
+function saveJson(){const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='khamar-data.json';a.click();}
+function loadJson(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);Object.assign(S,d);
+    uid=Math.max(0,...S.animals.map(a=>a.id))+1;fillSet();render();toast('✅ তথ্য লোড হয়েছে');}
+   catch(x){toast('❌ ফাইল পড়া যায়নি','err');}};r.readAsText(f);}
+
+/* ---------- Render ---------- */
+function render(){
+  renderSpPick();renderAnimals();renderMix();renderSum();
+  const sel=document.getElementById('m_an'),cur=sel.value;
+  sel.innerHTML=S.animals.length?S.animals.map(a=>'<option value="'+a.id+'">'+SPECIES[a.sp].label+' '+a.name+' — '+bn(a.weight,1)+' কেজি</option>').join(''):'<option value="">পশু যোগ করুন</option>';
+  if(cur)sel.value=cur;
+}
+/* ---------- সব বাটন এক জায়গা থেকে চালানো হয় ----------
+   (কিছু অ্যাপ-উইন্ডোতে বাটনের ভেতরে লেখা কোড বন্ধ থাকে, তাই এই পদ্ধতি) */
+function showTab(id){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.p===id));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('on',x.id===id));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+const ACT={
+ tab:a=>showTab(a),
+ add:()=>addAnimal(),
+ focusAdd:()=>{showTab('p-an');const n=document.getElementById('c_name');n.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>n.focus(),300);},
+ method:()=>methodUI(),
+ tape:()=>tape(),
+ stage:()=>stageUI(),
+ spPick:a=>pickSp(a),
+ basis:a=>{basisSp=a;render();},
+ filter:a=>{filterSp=a;render();},
+ del:a=>delAn(+a),
+ detail:a=>toggle(+a),
+ edit:a=>startEdit(+a),
+ medFor:a=>{showTab('p-med');const s=document.getElementById('m_an');if(s)s.value=a;},
+ esave:a=>saveEdit(+a),
+ ecancel:()=>cancelEdit(),
+ esp:a=>editSpChange(+a),
+ estage:a=>editStageChange(+a),
+ addIng:()=>addIng(),
+ resetMix:()=>resetMix(),
+ batch:()=>renderMix(),
+ mixDel:a=>{S.mix.splice(+a,1);render();},
+ mixSet:(a,el)=>{const q=a.split(':'),i=+q[0],f=q[1];
+   S.mix[i][f]=(f==='name')?el.value:(+en(el.value)||0);render();},
+ concMode:(a,el)=>{S.settings.concMode=el.value;fillSet();render();},
+ concPrice:(a,el)=>setConcPrice(el.value),
+ readyPrice:(a,el)=>{S.settings.priceReady=+en(el.value)||0;fillSet();render();},
+ readyCp:(a,el)=>{S.settings.cpReady=+en(el.value)||0;render();},
+ medMode:()=>medFields(),
+ medCalc:()=>calcMed(),
+ calib:()=>calib(),
+ setDiv:a=>{const q=a.split(':'),sp=q[0],d=+q[1];S.settings.divisor[sp]=d;fillSet();render();
+   toast(d===10840?'↺ '+SPECIES[sp].short+' সাধারণ সূত্রে ফিরেছে':'✅ '+SPECIES[sp].short+'-এর ভাজক '+bnp(d)+' সংরক্ষণ হয়েছে');},
+ saveSet:()=>saveSet(),
+ saveJson:()=>saveJson(),
+ loadJson:(a,el)=>loadJson({target:el}),
+ print:()=>window.print()
+};
+function fire(kind,e){
+  const t=e.target.closest('[data-'+kind+']');
+  if(!t)return;
+  const f=ACT[t.getAttribute('data-'+kind)];
+  if(!f)return;
+  if(kind==='act'){e.preventDefault();e.stopPropagation();}
+  try{f(t.getAttribute('data-arg'),t);}
+  catch(err){toast('সমস্যা হয়েছে: '+err.message,'err');}
+}
+document.addEventListener('click',e=>fire('act',e));
+document.addEventListener('change',e=>fire('chg',e));
+document.addEventListener('input',e=>fire('inp',e));
+document.querySelectorAll('.tab').forEach(t=>{t.setAttribute('data-act','tab');t.setAttribute('data-arg',t.dataset.p);});
+document.getElementById('c_stage').setAttribute('data-chg','stage');
+medFields();
+
+/* ---------- তথ্য ফোনেই জমা থাকে (অটো সেভ) ---------- */
+const KEY='khamar-data-v1';
+let saveT=null;
+function autoSave(){
+  clearTimeout(saveT);
+  saveT=setTimeout(()=>{
+    try{localStorage.setItem(KEY,JSON.stringify({animals:S.animals,mix:S.mix,settings:S.settings,uid:uid}));
+      const d=new Date();
+      document.getElementById('saveNote').textContent='💾 সব তথ্য এই ফোনে জমা আছে — শেষ সংরক্ষণ '+bn(d.getHours())+':'+String(d.getMinutes()).padStart(2,'0').replace(/\d/g,x=>BN[x]);
+    }catch(e){document.getElementById('saveNote').textContent='⚠️ এই ব্রাউজারে তথ্য জমা রাখা যাচ্ছে না — কাজ শেষে ফাইল সেভ করুন';}
+  },400);
+}
+let loaded=false;
+try{
+  const raw=localStorage.getItem(KEY);
+  if(raw){const d=JSON.parse(raw);
+    if(d&&d.animals){S.animals=d.animals;S.mix=d.mix||S.mix;
+      S.settings=Object.assign(S.settings,d.settings||{});
+      uid=d.uid||(Math.max(0,...S.animals.map(a=>a.id))+1);loaded=true;}}
+}catch(e){}
+if(!loaded){
+  S.animals.push({id:uid++,sp:'cow',name:'নমুনা — ষাঁড়',weight:250,method:'scale',girth:0,len:0,stage:'fatten_mid',milk:0,adg:800,buy:60000});
+  S.animals.push({id:uid++,sp:'goat',name:'নমুনা — ছাগল',weight:25,method:'scale',girth:0,len:0,stage:'fatten_mid',milk:0,adg:120,buy:9000});
+}
+const _render=render;
+render=function(){_render();autoSave();};
+
+fillSet();pickSp('cow');methodUI();render();
+
+/* ---------- ফোনে ইনস্টল ---------- */
+let deferred=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;
+  document.getElementById('installRow').style.display='block';});
+document.getElementById('installBtn').addEventListener('click',async()=>{
+  if(!deferred){toast('ব্রাউজারের মেনু থেকে "হোম স্ক্রিনে যোগ করুন" চাপুন');return;}
+  deferred.prompt();const r=await deferred.userChoice;deferred=null;
+  document.getElementById('installRow').style.display='none';
+  if(r.outcome==='accepted')toast('✅ অ্যাপ ইনস্টল হয়েছে — হোম স্ক্রিনে দেখুন');
+});
+window.addEventListener('appinstalled',()=>{document.getElementById('installRow').style.display='none';});
+
+/* ---------- অফলাইনে চলার ব্যবস্থা ---------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
